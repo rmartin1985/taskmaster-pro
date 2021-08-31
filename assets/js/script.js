@@ -20,7 +20,7 @@ var createTask = function(taskText, taskDate, taskList) {
 
 var loadTasks = function() {
   tasks = JSON.parse(localStorage.getItem("tasks"));
-
+console.log(tasks);
   // if nothing in localStorage, create a new object to track all task status arrays
   if (!tasks) {
     tasks = {
