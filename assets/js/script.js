@@ -45,32 +45,70 @@ var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+// enable draggable/sortable feature on list-group elements
+$(".card .list-group").sortable({
+  // enable draggin across lists
+  conectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  helper: "clone",
+  activate: function(event, ui) {
+    console.log(ui);
+  },
+  deactivate: function(event, ui) {
+    console.log(ui);
+  },
+  over: function(event) {
+    console.log(event);
+  },
+  out: function(event) {
+    console.log(event);
+  },
+  update: function(event) {
+    // array to store the tast data in
+    var tempArr = [];
 
-$(".list-group").on("click", "p", function() {
-  var text = $(this).text().trim();
-  var textInput = $("<textarea>").addClass("form-control").val(text);
-  $(this).replaceWith(textInput);
-  textInput.trigger("focus");
+    // loop over current set of children in sortable list
+    $(this).children().each(function() {
+      // add task data to the temp array as an object
+      tempArr.push({
+        text: $(this)
+          .find("p")
+          .text()
+          .trim(),
+
+        date: $(this)
+          .find("span")
+          .text()
+          .trim(),
+      });
+    });
+    // trim down list's ID to match objet property
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+
+    // update array on tasks object and save
+    tasks[arrName] = tempArr;
+    saveTasks();
+  },
+  stop: function(event) {
+    $(this).removeClass("dropover");
+  }
 });
 
-$(".list-group").on("blur", "textarea", function() {
-  // get the textarea's current value/text
-  var text = $(this).val().trim();
-
-  // get the parent ul's id attribute
-  var status = $(this).closest(".list-group").attr("id").replace("list-", "");
-
-  // get the task's position in the list of other li elements
-  var index = $(this).closest(".list-group-item").index();
-  tasks[status][index].text = text;
-  saveTasks();
-
-  // recreate p element
-  var taskP = $("<p>").addClass("m-1").text(text);
-
-  // replace textarea with p element
-  $(this).replaceWith(taskP);
-
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) {
+    ui.draggable.remove();
+  },
+  over: function(event, ui) {
+    console.log(ui);
+  },
+  out: function(event, ui) {
+    console.log(ui);
+  }
 });
 
 // modal was triggered
@@ -107,13 +145,47 @@ $("#task-form-modal .btn-primary").click(function() {
   }
 });
 
-// remove all tasks
-$("#remove-tasks").on("click", function() {
-  for (var key in tasks) {
-    tasks[key].length = 0;
-    $("#list-" + key).empty();
-  }
+// task text was clicked
+$(".list-group").on("click", "p", function() {
+  // get current text of p element
+  var text = $(this)
+    .text()
+    .trim();
+
+  // replace p element with a new textarea
+  var textInput = $("<textarea>").addClass("form-control").val(text);
+  $(this).replaceWith(textInput);
+
+  // auto focus the new element
+  textInput.trigger("focus");
+});
+
+// editable field was un-focused
+$(".list-group").on("blur", "textarea", function() {
+  // get the textarea's current value/text
+  var text = $(this).val();
+
+  // get the parent ul's id attribute
+  var status = $(this)
+      .closest(".list-group")
+      .attr("id")
+      .replace("list-", "");
+  var index = $(this)
+      .closest(".list-group-item")
+      .index();
+
+  // update task in array and re-save to localstorage
+  tasks[status][index].text = text;
   saveTasks();
+
+  // recreate p element
+  var taskP = $("<p>")
+      .addClass("m-1")
+      .text(text);
+
+  // replace textarea with p element
+  $(this).replaceWith(taskP);
+
 });
 
 // due date was clicked
@@ -135,9 +207,9 @@ $(".list-group").on("click", "span", function() {
 });
 
 // value of due date was changed
-$(".list-group").on("blur", "input[type='text']", function() {
+$(".list-group").on("change", "input[type='text']", function() {
   // get current text
-  var date = $(this).val().trim();
+  var date = $(this).val();
 
   // get the parent ul's id attribute
   var status = $(this).closest(".list-group").attr("id").replace("list-", "");
@@ -156,6 +228,15 @@ $(".list-group").on("blur", "input[type='text']", function() {
 
   // replace input with the span element
   $(this).replaceWith(taskSpan);
+});
+
+// remove all tasks
+$("#remove-tasks").on("click", function() {
+  for (var key in tasks) {
+    tasks[key].length = 0;
+    $("#list-" + key).empty();
+  }
+  saveTasks();
 });
 
 // load tasks for the first time
