@@ -48,7 +48,7 @@ var saveTasks = function() {
 // enable draggable/sortable feature on list-group elements
 $(".card .list-group").sortable({
   // enable draggin across lists
-  conectWith: $(".card .list-group"),
+  connectWith: $(".card .list-group"),
   scroll: false,
   tolerance: "pointer",
   helper: "clone",
